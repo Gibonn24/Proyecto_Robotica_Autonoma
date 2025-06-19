@@ -86,6 +86,7 @@ class FrameMarker:
             marker.color.a = alpha
             if axis == "x":
                 marker.color.r = color_saturation
+                marker.pose.orientation.w = 1.0
             elif axis == "y":
                 marker.color.g = color_saturation
                 q = quaternion_mult([1, 0, 0, 0], [np.cos(np.pi/4), 0, 0, np.sin(np.pi/4)])
@@ -94,7 +95,6 @@ class FrameMarker:
                 marker.color.b = color_saturation
                 q = quaternion_mult([1, 0, 0, 0], [np.cos(-np.pi/4), 0, np.sin(-np.pi/4), 0])
                 marker.pose.orientation.w, marker.pose.orientation.x, marker.pose.orientation.y, marker.pose.orientation.z = q
-            marker.pose.orientation.w = marker.pose.orientation.w if axis == "x" else marker.pose.orientation.w
             self.markers.append(marker)
 
     def set_pose(self, pose):
