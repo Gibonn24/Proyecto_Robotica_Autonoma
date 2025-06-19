@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <!-- Carga la descripción del robot -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ur5_description)/urdf/ur5_robotiq85_gripper.urdf.xacro'" />
+
+  <!-- Publicador del estado del robot -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!-- Lanza RViz con una configuración predefinida (opcional, si tienes una) -->
+  <node pkg="rviz" type="rviz" name="rviz" required="true"
+        args="-d $(find ur5_description)/rviz/urdf.rviz"/>
+
+</launch>
