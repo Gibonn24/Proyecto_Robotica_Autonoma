@@ -86,20 +86,16 @@ def transl(x, y, z):
     T[2, 3] = z
     return T
 
-def dh(d, theta, a, alpha):
-    """
-    Compute the homogeneous transformation matrix using Denavit-Hartenberg parameters.
-    d, theta, a, alpha are scalars.
-    """
-    sth = np.sin(theta)
-    cth = np.cos(theta)
-    sa  = np.sin(alpha)
-    ca  = np.cos(alpha)
-    T = np.array([[cth, -ca*sth,  sa*sth, a*cth],
-                  [sth,  ca*cth, -sa*cth, a*sth],
-                  [0.0,      sa,      ca,     d],
-                  [0.0,     0.0,     0.0,   1.0]])
-    return T
+
+def dh(a, alpha, d, theta):
+    ca, sa = np.cos(alpha), np.sin(alpha)
+    ct, st = np.cos(theta), np.sin(theta)
+    return np.array([
+        [ct, -st * ca, st * sa, a * ct],
+        [st, ct * ca, -ct * sa, a * st],
+        [0, sa, ca, d],
+        [0, 0, 0, 1]
+    ])
 
 
 def fkine_ur5(q):
@@ -260,19 +256,4 @@ def skew(w):
     return R
 
 
-def rotx(ang):
-    return np.array([[1, 0, 0],
-                     [0, cos(ang), -sin(ang)],
-                     [0, sin(ang), cos(ang)]])
 
-
-def roty(ang):
-    return np.array([[cos(ang), 0, sin(ang)],
-                     [0, 1, 0],
-                     [-sin(ang), 0, cos(ang)]])
-
-
-def rotz(ang):
-    return np.array([[cos(ang), -sin(ang), 0],
-                     [sin(ang), cos(ang), 0],
-                     [0, 0, 1]])
