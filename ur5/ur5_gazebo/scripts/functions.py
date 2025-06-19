@@ -1,6 +1,6 @@
 import numpy as np
 from copy import copy
-import rbdl
+ #import rbdl
 import matplotlib.pyplot as plt
 import signal
 import sys
@@ -108,11 +108,6 @@ def fkine_ur5(q):
     for i in range(6):
         T = T @ dh(a[i], alpha[i], d[i], q[i])
 
-    # wrist_3_link to tool0
-    T = T @ transl(0, d[5], 0) @ rotx(-np.pi/2)
-    # tool0 to gripper base (coupler + base joint)
-    T = T @ transl(0, 0, 0.004) @ rotz(-np.pi/2)
-    T = T @ transl(0, 0, 0.004) @ roty(-np.pi/2) @ rotz(np.pi)
     return T
 
 
