@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import rospy
+from sensor_msgs.msg import JointState
+
+from markers import BallMarker, color
+from functions import fkine_ur5
+
+if __name__ == '__main__':
+    rospy.init_node("testForwardKine")
+    pub = rospy.Publisher('joint_states', JointState, queue_size=10)
+    bmarker = BallMarker(color['GREEN'])
+
+    # Joint names according to the URDF
+    jnames = [
+        'shoulder_pan_joint',
+        'shoulder_lift_joint',
+        'elbow_joint',
+        'wrist_1_joint',
+        'wrist_2_joint',
+        'wrist_3_joint',
+        'robotiq_85_left_knuckle_joint',
+        'robotiq_85_right_knuckle_joint',
+        'robotiq_85_left_finger_joint'
+    ]
+
+    # Example joint configuration
+    q = np.array([0.0, -1.57, 1.57, 0.0, 0.0, 0.0, 0.2])
+
+    # Compute forward kinematics up to the gripper
+    T = fkine_ur5(q)
+    rospy.loginfo("End effector pose:\n%s", np.round(T, 3))
+    bmarker.position(T)
+
+    # Publish joint state message
+    jstate = JointState()
+    jstate.header.stamp = rospy.Time.now()
+    jstate.name = jnames
+    q = np.append(q, [0.03, 0.03])
+    jstate.position = q
+
+    rate = rospy.Rate(100)
+    while not rospy.is_shutdown():
+        jstate.header.stamp = rospy.Time.now()
+        pub.publish(jstate)
+        bmarker.publish()
+        rate.sleep()
