@@ -8,7 +8,7 @@
 
   <!-- Controllers config -->
   <rosparam file="$(find ur5_gazebo)/controller/ur5gripper_controllers.yaml"
-            command="load" />
+            command="load" ns="gazebo_ros_control/pid_gains" />
   <!-- PID gains for gazebo_ros_control -->
   <rosparam file="$(find ur5_gazebo)/config/pid_gains.yaml"
             command="load" />
