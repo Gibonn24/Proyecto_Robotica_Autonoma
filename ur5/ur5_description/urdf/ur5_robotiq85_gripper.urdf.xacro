@@ -77,5 +77,51 @@
       <palm_link>robotiq_85_base_link</palm_link>
     </gripper>
   </gazebo>
-  
+
+  <!-- Depth camera mounted above the gripper -->
+  <link name="depth_camera_link">
+    <visual>
+      <geometry>
+        <box size="0.02 0.02 0.02"/>
+      </geometry>
+      <material name="flat_black"/>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+  </link>
+
+  <joint name="depth_camera_joint" type="fixed">
+    <parent link="robotiq_coupler"/>
+    <child link="depth_camera_link"/>
+    <origin xyz="0 0 0.10" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="depth_camera_link">
+    <sensor type="depth" name="depth_camera">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>5.0</far>
+        </clip>
+      </camera>
+      <plugin name="depth_camera_controller" filename="libgazebo_ros_camera.so">
+        <cameraName>depth_camera</cameraName>
+        <frameName>depth_camera_link</frameName>
+        <imageTopicName>image_raw</imageTopicName>
+        <depthImageTopicName>depth/image_raw</depthImageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
 </robot>
