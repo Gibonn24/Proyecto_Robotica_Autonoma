@@ -87,27 +87,36 @@ def transl(x, y, z):
     return T
 
 
-def dh(a, alpha, d, theta):
-    ca, sa = np.cos(alpha), np.sin(alpha)
-    ct, st = np.cos(theta), np.sin(theta)
-    return np.array([
-        [ct, -st * ca, st * sa, a * ct],
-        [st, ct * ca, -ct * sa, a * st],
-        [0, sa, ca, d],
-        [0, 0, 0, 1]
-    ])
+def dh(d, theta, a, alpha):
+    """
+    Matriz de transformacion homogenea asociada a los parametros DH.
+    Retorna una matriz 4x4
+    """
+    sth = np.sin(theta)
+    cth = np.cos(theta)
+    sa  = np.sin(alpha)
+    ca  = np.cos(alpha)
+    T = np.array([[cth, -ca*sth,  sa*sth, a*cth],
+                   [sth,  ca*cth, -sa*cth, a*sth],
+                   [0.0,      sa,      ca,     d],
+                   [0.0,     0.0,     0.0,   1.0]])
+    return T
 
 
-def fkine_ur5(q):
-    """Forward kinematics of the UR5 with a Robotiq gripper."""
-    d = [0.089159, 0, 0, 0.10915, 0.09465, 0.0823]
-    a = [0, -0.42500, -0.39225, 0, 0, 0]
-    alpha = [np.pi/2, 0, 0, np.pi/2, -np.pi/2, 0]
-
-    T = np.eye(4)
-    for i in range(6):
-        T = T @ dh(a[i], alpha[i], d[i], q[i])
-
+def ur5_fkine(q):
+    """
+    Calcular la cinematica directa del robot UR5 dados sus valores articulares. 
+    q es un vector numpy de la forma [q1, q2, q3, q4, q5, q6]
+    """
+    # Matrices DH
+    T1 = dh( 0.0892,        q[0],     0, pi/2)
+    T2 = dh(      0, q[1]+2*pi/2, -0.425,    0)
+    T3 = dh(      0,        q[2], -0.392,    0)
+    T4 = dh( 0.1093, q[3]+2*pi/2,     0, pi/2)
+    T5 = dh(0.09475,     q[4]+pi,     0, -pi/2)
+    T6 = dh( 0.0825,        q[5],     0,    0)
+    # Efector final con respecto a la base
+    T = T1.dot(T2).dot(T3).dot(T4).dot(T5).dot(T6)
     return T
 
 

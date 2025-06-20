@@ -1,48 +1,42 @@
 #!/usr/bin/env python3
-
-import numpy as np
 import rospy
 from sensor_msgs.msg import JointState
 
-from markers import BallMarker, color
-from functions import fkine_ur5
+from markers import *
+from functions import *
 
 if __name__ == '__main__':
-    rospy.init_node("testForwardKine")
-    pub = rospy.Publisher('joint_states', JointState, queue_size=10)
-    bmarker = BallMarker(color['GREEN'])
 
-    # Joint names according to the URDF
-    jnames = [
-        'shoulder_pan_joint',
-        'shoulder_lift_joint',
-        'elbow_joint',
-        'wrist_1_joint',
-        'wrist_2_joint',
-        'wrist_3_joint',
-        'robotiq_85_left_knuckle_joint',
-        'robotiq_85_right_knuckle_joint',
-        'robotiq_85_left_finger_joint'
-    ]
+  rospy.init_node("testForwardKinematics")
+  pub = rospy.Publisher('joint_states', JointState, queue_size=1)
+  bmarker = BallMarker(color['GREEN'])
 
-    # Example joint configuration
-    q = np.array([3.14, -2, 1.57, 0.0, 1.57, 1.57, 0.2])
+  # Joint names
+  jnames = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint','wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+  # Joint Configuration
+  q = [0, -1.57, 0, 0, 0, 0]
 
-    # Compute forward kinematics up to the gripper
-    T = fkine_ur5(q)
-    rospy.loginfo("End effector pose:\n%s", np.round(T, 3))
-    bmarker.position(T)
+  # End effector with respect to the base
+  T = ur5_fkine(q)
+  print( np.round(T, 3) )
+  bmarker.position(T)
 
-    # Publish joint state message
-    jstate = JointState()
+  # Object (message) whose type is JointState
+  jstate = JointState()
+  # Set values to the message
+  jstate.header.stamp = rospy.Time.now()
+  jstate.name = jnames
+  # Add the head joint value (with value 0) to the joints
+  jstate.position = q
+
+  # Loop rate (in Hz)
+  rate = rospy.Rate(20)
+  # Continuous execution loop
+  while not rospy.is_shutdown():
+    # Current time (needed for ROS)
     jstate.header.stamp = rospy.Time.now()
-    jstate.name = jnames
-    q = np.append(q, [0.03, 0.03])
-    jstate.position = q
-
-    rate = rospy.Rate(100)
-    while not rospy.is_shutdown():
-        jstate.header.stamp = rospy.Time.now()
-        pub.publish(jstate)
-        bmarker.publish()
-        rate.sleep()
+    # Publish the message
+    pub.publish(jstate)
+    bmarker.publish()
+    # Wait for the next iteration
+    rate.sleep()
