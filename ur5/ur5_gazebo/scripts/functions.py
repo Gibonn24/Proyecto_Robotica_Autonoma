@@ -109,12 +109,12 @@ def ur5_fkine(q):
     q es un vector numpy de la forma [q1, q2, q3, q4, q5, q6]
     """
     # Matrices DH
-    T1 = dh( 0.0892,        q[0],     0, pi/2)
-    T2 = dh(      0, q[1]+2*pi/2, -0.425,    0)
-    T3 = dh(      0,        q[2], -0.392,    0)
-    T4 = dh( 0.1093, q[3]+2*pi/2,     0, pi/2)
-    T5 = dh(0.09475,     q[4]+pi,     0, -pi/2)
-    T6 = dh( 0.0825,        q[5],     0,    0)
+    T1 = dh(0.089159,       q[0],      0,  pi/2)
+    T2 = dh(0.0,        q[1]-pi/2, -0.425,   0)
+    T3 = dh(0.0,             q[2], -0.39225, 0)
+    T4 = dh(0.10915,    q[3]-pi/2,      0,  pi/2)
+    T5 = dh(0.09465,        q[4],      0, -pi/2)
+    T6 = dh(0.0823,         q[5],      0,     0)
     # Efector final con respecto a la base
     T = T1.dot(T2).dot(T3).dot(T4).dot(T5).dot(T6)
     return T
