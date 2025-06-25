@@ -12,7 +12,7 @@ errors = []
 
 
 def signal_handler(sig, frame):
-    print('\nCtrl+C presionado. Ejecutando código de limpieza...')
+    print('\nCtrl+C presionado. Ejecutando limpieza...')
     plt.plot(errors, 'r')
     plt.plot(errors, 'b.')
     plt.title('Evolución del error - Método de Newton\nIteraciones: ' +
