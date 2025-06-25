@@ -4,8 +4,28 @@ import rospy
 from sensor_msgs.msg import JointState
 from markers import *
 from functions import *
+import matplotlib.pyplot as plt
+import signal
+import sys
+
+errors = []
+
+
+def signal_handler(sig, frame):
+    print('\nCtrl+C presionado. Ejecutando código de limpieza...')
+    plt.plot(errors, 'r')
+    plt.plot(errors, 'b.')
+    plt.title('Evolución del error - Método de Newton\nIteraciones: ' +
+              str(len(errors)))
+    plt.grid()
+    plt.xlabel('Número de iteraciones')
+    plt.ylabel('Norma del error')
+    plt.show()
+    sys.exit(0)
 
 if __name__ == '__main__':
+
+    signal.signal(signal.SIGINT, signal_handler)
 
     rospy.init_node("testInvKine")
     pub = rospy.Publisher('joint_states', JointState, queue_size=1)
@@ -21,11 +41,15 @@ if __name__ == '__main__':
     # Initial configuration
     q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
     # Inverse kinematics
-    q = ikine_ur5(xd, q0)
+    q, errors = ikine_ur5(xd, q0)
 
     # Resulting position (end effector with respect to the base link)
     T = fkine_ur5(q)
+    print('\n')
+    print("Posición deseada: " + "X: " + str(xd[0]) + ", Y: " + str(xd[1]) + ", Z: " + str(xd[2]))
     print('Obtained value:\n', np.round(T,3))
+    print('q:\n', np.round(q, 3))
+    print("\n")
 
     # Red marker shows the achieved position
     bmarker.xyz(T[0:3,3])
