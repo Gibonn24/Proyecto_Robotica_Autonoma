@@ -105,9 +105,11 @@ def dh(d, theta, a, alpha):
 
 def fkine_ur5(q):
     """
-    Calcular la cinematica directa del robot UR5 dados sus valores articulares. 
+    Calcular la cinematica directa del robot UR5 dados sus valores articulares.
     q es un vector numpy de la forma [q1, q2, q3, q4, q5, q6]
     """
+    # Ensure q is a flat numpy array to avoid shape issues
+    q = np.asarray(q, dtype=float).reshape(-1)
     # Matrices DH
     T1 = dh(0.089159,       q[0],      0,  pi/2)
     T2 = dh(0.0,        q[1]-pi/2, -0.425,   0)
@@ -152,7 +154,7 @@ def ikine_ur5(xdes, q0):
     max_iter = 10000
     delta = 0.00001
     errors = []
-    q = copy(q0)
+    q = np.asarray(copy(q0), dtype=float).reshape(-1)
     for _ in range(max_iter):
         T = fkine_ur5(q)
         x = T[0:3, 3]
@@ -162,7 +164,7 @@ def ikine_ur5(xdes, q0):
         J = jacobian_position(q)
         delta_q = np.linalg.pinv(J) @ error
         # Update joint angles
-        q += delta_q
+        q = np.asarray(q + delta_q, dtype=float).reshape(-1)
         errors.append(np.linalg.norm(error))
         if np.linalg.norm(delta_q) < delta:
             break
@@ -180,7 +182,7 @@ def ikine_ur5_gradient(xdes, q0, alpha=0.01):
     max_iter = 10000
     delta = 0.00001
     errors = []
-    q = copy(q0)
+    q = np.asarray(copy(q0), dtype=float).reshape(-1)
     for _ in range(max_iter):
         T = fkine_ur5(q)
         x = T[0:3, 3]
@@ -189,7 +191,7 @@ def ikine_ur5_gradient(xdes, q0, alpha=0.01):
             break
         J = jacobian_position(q)
         delta_q = alpha * (J.T @ error)
-        q += delta_q
+        q = np.asarray(q + delta_q, dtype=float).reshape(-1)
         errors.append(np.linalg.norm(error))
         if np.linalg.norm(delta_q) < delta:
             break
