@@ -14,10 +14,10 @@ if __name__ == '__main__':
   # Joint names
   jnames = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint','wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
   # Joint Configuration
-  q = [0, -1.57, 0, 1.57, 1.57, -1.57]
+  q = [0, -1.57, 0, 0, 0, 0]
 
   # End effector with respect to the base
-  T = ur5_fkine(q)
+  T = fkine_ur5(q)
   print( np.round(T, 3) )
   bmarker.position(T)
 

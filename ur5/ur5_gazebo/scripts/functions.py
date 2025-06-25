@@ -103,7 +103,7 @@ def dh(d, theta, a, alpha):
     return T
 
 
-def ur5_fkine(q):
+def fkine_ur5(q):
     """
     Calcular la cinematica directa del robot UR5 dados sus valores articulares. 
     q es un vector numpy de la forma [q1, q2, q3, q4, q5, q6]
@@ -130,9 +130,14 @@ def jacobian_position(q, delta=0.0001):
     J = np.zeros((3, n))
     T = fkine_ur5(q)
     for i in range(n):
+        # Copiar la configuracion articular inicial (usar este dq para cada
+        # incremento en una articulacion)
         dq = copy(q)
+        # Incrementar la articulacion i-esima usando un delta
         dq[i] += delta
+        # Transformacion homogenea luego del incremento (q+dq)
         T_inc = fkine_ur5(dq)
+        # Aproximacion del Jacobiano de posicion usando diferencias finitas
         J[:, i] = (T_inc[:3, 3] - T[:3, 3]) / delta
     return J
 
@@ -156,6 +161,7 @@ def ikine_ur5(xdes, q0):
             break
         J = jacobian_position(q)
         delta_q = np.linalg.pinv(J) @ error
+        # Update joint angles
         q += delta_q
         errors.append(np.linalg.norm(error))
         if np.linalg.norm(delta_q) < delta:
