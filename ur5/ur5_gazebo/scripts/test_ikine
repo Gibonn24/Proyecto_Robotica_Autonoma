@@ -21,10 +21,10 @@ if __name__ == '__main__':
     # Initial configuration
     q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
     # Inverse kinematics
-    q = ikine_ur10(xd, q0)
+    q = ikine_ur5(xd, q0)
 
     # Resulting position (end effector with respect to the base link)
-    T = fkine_ur10(q)
+    T = fkine_ur5(q)
     print('Obtained value:\n', np.round(T,3))
 
     # Red marker shows the achieved position
