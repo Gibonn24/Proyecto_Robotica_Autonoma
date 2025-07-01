@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import rospy
+
+from markers import *
+from functions import *
+import csv
+
+
+
+
+
+q0 = np.array([0, -1.57, 0.75, 0, 0, 0])
+xd = np.array([0.0, 0.0, 0.8])
+
+q,error = ikine_ur5(xd, q0)
+T = fkine_ur5(q)
+
+S = T[0:3,3] #INICIAL
+ 
+
+G = [0.1, 0.8, 0.1]   #FINAL
+
+# Lista de obstáculos esféricos: [x, y, z, radio]
+obstacleList = [
+    #(5, 5, 5, 1),
+]
+
+
+
+rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
+path = rrt.planning()
+
+# Parámetros
+maxIter = 1000
+smoothed_path = path_smoothing_3d(path, maxIter, obstacleList)
+
+
+# Convertir a numpy array por seguridad
+smoothed_np = np.array(smoothed_path)
+
+# Guardar como archivo CSV con encabezado
+np.savetxt("smoothed_path.csv", smoothed_np, fmt="%.4f", delimiter=",", comments='')
+
+
+
+

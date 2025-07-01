@@ -32,14 +32,14 @@ if __name__ == '__main__':
 
     bmarker      = BallMarker(color['RED'])
     bmarker_des  = BallMarker(color['GREEN'])
-
+    bmarker_extra  = BallMarker(color['BLUE'])
     # Joint names
     jnames = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
     # Desired position
-    xd = np.array([0.84, 0.125, 0.249])
+    xd = np.array([0.3, 0.3, 0.8])
     # Initial configuration
-    q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
+    q0 = np.array([0, -1.57, 0.75, 0, 0, 0])
     # Inverse kinematics
     q, errors = ikine_ur5(xd, q0)
 
@@ -55,6 +55,10 @@ if __name__ == '__main__':
     bmarker.xyz(T[0:3,3])
     # Green marker shows the desired position
     bmarker_des.xyz(xd)
+
+    pos_extra = np.array([0.3, 0.5, 0.1])
+    bmarker_extra.xyz(pos_extra)
+
 
     # Objeto (mensaje) de tipo JointState
     jstate = JointState()
@@ -75,5 +79,7 @@ if __name__ == '__main__':
         pub.publish(jstate)
         bmarker.publish()
         bmarker_des.publish()
+
+
         # Wait for the next iteration
         rate.sleep()

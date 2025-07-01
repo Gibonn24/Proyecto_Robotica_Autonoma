@@ -6,6 +6,7 @@ import rospy
 class BallMarker(object):
     """
     Class to visualize ball markers in RViz
+
     """
     id = 0
 
@@ -14,8 +15,9 @@ class BallMarker(object):
         The color can be specified as a list with 3 elements or as the color
         dictionary (e.g. BLUE, RED, etc). Alpha sets the transparency and scale
         scales the size of the ball
+
         """
-        reference_frame = rospy.get_param('reference_frame','base_link')
+        reference_frame = rospy.get_param('reference_frame','base')
         self.marker_pub = rospy.Publisher("visualization_marker", Marker,
                                           queue_size=10)
         self.marker = Marker()
@@ -47,6 +49,7 @@ class BallMarker(object):
     def position(self, T):
         """
         Set position (4x4 NumPy homogeneous matrix) for the ball and publish it
+
         """
         self.marker.pose.position.x = T[0,3]
         self.marker.pose.position.y = T[1,3]
@@ -56,6 +59,7 @@ class BallMarker(object):
     def xyz(self, position):
         """
         Set position (list) for the ball and publish it
+
         """
         self.marker.pose.position.x = position[0]
         self.marker.pose.position.y = position[1]
@@ -70,6 +74,7 @@ class BallMarker(object):
 
 """
 List for colors in BallMarker
+
 """
 color = dict()
 color['RED']       = (1.0, 0.0, 0.0)
@@ -88,6 +93,7 @@ color['WHITE']     = (1.0, 1.0, 1.0)
 class FrameMarker(object):
     """
     Class to visualize frames as markers in RViz
+
     """
     id = 0
 
@@ -95,8 +101,9 @@ class FrameMarker(object):
         """
         The color saturation ranges from 0 to 1. Alpha sets the transparency
         and scale scales the size of the ball
+
         """
-        reference_frame = rospy.get_param('reference_frame','base_link')
+        reference_frame = rospy.get_param('reference_frame','base')
         self.marker_pub = rospy.Publisher("visualization_marker", Marker,
                                           queue_size=10)
         self.markerx = Marker()
@@ -167,6 +174,7 @@ class FrameMarker(object):
         """
         Set the pose (7x1 NumPy matrix) for the ball and publish it. If only
         position is passed, a canonical orientation is used.
+
         """
         self.markerx.pose.position.x = pose[0]
         self.markerx.pose.position.y = pose[1]
