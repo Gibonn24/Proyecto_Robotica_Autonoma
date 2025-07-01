@@ -116,7 +116,10 @@
     <!-- Soda cans inside bookshelves -->
 
     <!-- Bookshelf 1 -->
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of f117433... Reduce soda cans in project world to three
     <model name="can_coke_b1_bottom">
       <static>true</static>
       <include>
@@ -132,6 +135,57 @@
       </include>
 
 
+    </model>
+    <model name="can_sprite_b1_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.2 -0.705 0.86 0 0 3.14</pose>
+      </include>
+    </model>
+
+    <model name="can_coke_b1_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>0.2 -0.705 1.18 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b1_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 -0.705 1.18 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b1_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.2 -0.705 1.18 0 0 3.14</pose>
+      </include>
+    </model>
+
+    <model name="can_coke_b1_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>0.2 -0.705 1.48 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b1_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 -0.705 1.48 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b1_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.2 -0.705 1.48 0 0 3.14</pose>
+      </include>
     </model>
     <model name="can_sprite_b1_bottom">
       <static>true</static>
@@ -230,7 +284,10 @@
       </include>
     </model>
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of f117433... Reduce soda cans in project world to three
     <model name="can_coke_b2_top">
       <static>true</static>
       <include>
