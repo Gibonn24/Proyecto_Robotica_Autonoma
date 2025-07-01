@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Scan three shelves with the UR5 camera and record can positions."""
+"""Scan nine shelves across three bookcases with the UR5 camera and record
+can positions."""
 
 import os
 import csv
@@ -50,9 +51,18 @@ class ShelfScanner:
                             'wrist_2_joint', 'wrist_3_joint']
 
         self.shelf_positions = rospy.get_param('~shelf_positions', [
-            [0.0, -1.4, 1.2, -1.8, -1.5, 0.0],  # bottom shelf
-            [0.0, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle shelf
-            [0.0, -0.8, 1.6, -1.8, -1.5, 0.0],  # top shelf
+            # Bookshelf 1
+            [0, -2.4, 2.5, 3.14, -1.5, 3.14] ,  # bottom 1
+            [0.0, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle
+            [0.0, -0.8, 1.6, -1.8, -1.5, 0.0],  # top
+            # Bookshelf 2
+            [1.57, -2.4, 2.5, 3.14, -1.5, 3.14]   # bottom
+            [1.57, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle
+            [1.57, -0.8, 1.6, -1.8, -1.5, 0.0],  # top
+            # Bookshelf 3
+            [-1.57, -1.4, 1.2, -1.8, -1.5, 0.0],  # bottom
+            [-1.57, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle
+            [-1.57, -0.8, 1.6, -1.8, -1.5, 0.0],  # top
         ])
 
     def color_callback(self, msg):
@@ -99,7 +109,6 @@ class ShelfScanner:
                 self.detections.append((brand, (X, Y, Z)))
 
     def scan(self):
-        self.detections = []  # Reset detections to avoid mixing results from multiple runs
         rate = rospy.Rate(1)
         for pos in self.shelf_positions:
             self.move_arm(pos)

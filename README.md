@@ -18,3 +18,14 @@ rosrun ur5_gazebo detect_cans.py
 
 El modelo se carga por defecto desde el mismo directorio del script, pero puede
 especificarse otro archivo utilizando el parámetro `model_path`.
+
+## Escaneo de estantes
+
+Para registrar la posición de las latas en los tres libreros se incluye el
+script `ur5/ur5_gazebo/scripts/scan_shelves.py`. Por defecto recorre las nueve
+baldas (tres por cada librero) desde abajo hacia arriba y guarda en un archivo
+CSV la marca y la posición 3D de cada lata detectada.
+
+```bash
+rosrun ur5_gazebo scan_shelves.py
+```
