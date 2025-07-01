@@ -117,15 +117,111 @@
 
     <!-- Bookshelf 1 -->
 
+    <model name="can_coke_b1_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>0.2 -0.705 0.86 0 0 3.14</pose>
+      </include>
+    </model>
     <model name="can_pepsi_b1_bottom">
       <static>true</static>
       <include>
         <uri>model://can_pepsi</uri>
         <pose>0 -0.705 0.86 0 0 3.14</pose>
       </include>
-    
+
+
+    </model>
+    <model name="can_sprite_b1_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.2 -0.705 0.86 0 0 3.14</pose>
+      </include>
+    </model>
+
+    <model name="can_coke_b1_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>0.2 -0.705 1.18 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b1_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 -0.705 1.18 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b1_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.2 -0.705 1.18 0 0 3.14</pose>
+      </include>
+    </model>
+
+    <model name="can_coke_b1_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>0.2 -0.705 1.48 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b1_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 -0.705 1.48 0 0 3.14</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b1_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.2 -0.705 1.48 0 0 3.14</pose>
+      </include>
+    </model>
+
     <!-- Bookshelf 2 -->
-    
+    <model name="can_coke_b2_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>-0.708 -0.203 0.86 0 0 1.556</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b2_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>-0.705 -0.003 0.86 0 0 1.556</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b2_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.702 0.197 0.86 0 0 1.556</pose>
+      </include>
+    </model>
+
+    <model name="can_coke_b2_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>-0.708 -0.203 1.18 0 0 1.556</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b2_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>-0.705 -0.003 1.18 0 0 1.556</pose>
+      </include>
+    </model>
     <model name="can_sprite_b2_middle">
       <static>true</static>
       <include>
@@ -133,9 +229,74 @@
         <pose>-0.702 0.197 1.18 0 0 1.556</pose>
       </include>
     </model>
-   
+
+
+    <model name="can_coke_b2_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>-0.708 -0.203 1.48 0 0 1.556</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b2_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>-0.705 -0.003 1.48 0 0 1.556</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b2_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>-0.702 0.197 1.48 0 0 1.556</pose>
+      </include>
+    </model>
+
     <!-- Bookshelf 3 -->
-    
+    <model name="can_coke_b3_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>-0.2 0.705 0.86 0 0 0</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b3_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 0.705 0.86 0 0 0</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b3_bottom">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>0.2 0.705 0.86 0 0 0</pose>
+      </include>
+    </model>
+
+    <model name="can_coke_b3_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_coke</uri>
+        <pose>-0.2 0.705 1.18 0 0 0</pose>
+      </include>
+    </model>
+    <model name="can_pepsi_b3_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 0.705 1.18 0 0 0</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b3_middle">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>0.2 0.705 1.18 0 0 0</pose>
+      </include>
+    </model>
 
     <model name="can_coke_b3_top">
       <static>true</static>
@@ -144,7 +305,20 @@
         <pose>-0.2 0.705 1.48 0 0 0</pose>
       </include>
     </model>
-
+    <model name="can_pepsi_b3_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_pepsi</uri>
+        <pose>0 0.705 1.48 0 0 0</pose>
+      </include>
+    </model>
+    <model name="can_sprite_b3_top">
+      <static>true</static>
+      <include>
+        <uri>model://can_sprite</uri>
+        <pose>0.2 0.705 1.48 0 0 0</pose>
+      </include>
+    </model>
     <!-- wooden_case sobre cafe_table -->
 
  
