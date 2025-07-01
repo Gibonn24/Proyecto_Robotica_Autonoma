@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+
+import rospy
+import numpy as np
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from markers import *
+from functions import *
+
+
+def densify_trajectory(trajectory, num_points_between=5):
+    """
+    trajectory: np.array de forma (N, 3)
+    num_points_between: número de puntos que se interpolan entre cada par consecutivo
+    """
+    dense_path = []
+    for i in range(len(trajectory) - 1):
+        p1 = trajectory[i]
+        p2 = trajectory[i + 1]
+
+        # Interpolación lineal
+        for j in range(num_points_between):
+            t = j / (num_points_between + 1)
+            interp = (1 - t) * p1 + t * p2
+            dense_path.append(interp)
+
+        dense_path.append(p2)  # Asegura incluir el punto final del segmento
+
+    # Asegura incluir el primer punto
+    dense_path.insert(0, trajectory[0])
+    return np.array(dense_path)
+    
+    
+def main():
+    rospy.init_node("testKinematicControlPosition_gazebo")
+
+    pub = rospy.Publisher('/trajectory_controller/command', JointTrajectory, queue_size=10)
+    rospy.sleep(1)  # espera que se conecte el publisher
+
+    bmarker_current  = BallMarker(color['RED'])
+    bmarker_desired = BallMarker(color['GREEN'])
+
+    joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
+                   'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+                   
+                   
+    obstacleList = [
+    #(5, 5, 5, 1)
+    ]
+    
+    q0 = np.array([0, -1.57, 0.75, 0, 0, 0])
+    xd = np.array([0.0, 0.0, 0.8])
+    q,error = ikine_ur5(xd, q0)
+    T = fkine_ur5(q)
+
+    S = T[0:3,3] #INICIAL
+    G = [0.1, 0.8, 0.1]   #FINAL
+    rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
+    path = rrt.planning()
+    maxIter = 1000
+    smoothed_path = path_smoothing_3d(path, maxIter, obstacleList)
+    trajectory = np.array(smoothed_path)
+    
+    new_point = np.array([[0.0, 0.0, 0.8]])  
+    trajectory = np.vstack((trajectory, new_point))
+    
+    #trajectory = np.array([[0.0, 0.0, 0.8], [0.3, 0.8, 0.1],[0.0, 0.0, 0.8]])
+    
+    
+    trajectory = densify_trajectory(trajectory, num_points_between=3)
+
+    print(trajectory)
+    
+    k = 0.5
+    
+    i = 0
+    xd = trajectory[i+1]
+    q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
+    
+    q = q0.copy()
+    rate = rospy.Rate(50)  # 50 Hz
+    dt = 1.0/50
+
+    while not rospy.is_shutdown():
+        # Cálculo de error
+        T = fkine_ur5(q)
+        x = T[0:3, 3]
+        e = x - xd
+        
+        if np.linalg.norm(e) < 0.05:
+        
+            i += 1
+            if i >= len(trajectory):
+                rospy.loginfo("Trayectoria completada.")
+                break  # se llegó al final
+            xd = trajectory[i]
+            rospy.loginfo(f"Yendo al punto {i}: {xd}")
+        
+        
+        de = -k * e
+
+        J = jacobian_position(q)
+        dq = np.linalg.pinv(J).dot(de)
+        q = q + dq * dt
+
+        # Publicar trayectoria para mover el robot
+        traj = JointTrajectory()
+        traj.joint_names = joint_names
+
+        pt = JointTrajectoryPoint()
+        pt.positions = q.tolist()
+        pt.time_from_start = rospy.Duration(2)  # tiempo corto para movimiento fluido
+
+        traj.points = [pt]
+        traj.header.stamp = rospy.Time.now()
+
+        pub.publish(traj)
+
+        # Visualización
+        #bmarker_current.xyz(x)
+        #bmarker_desired.xyz(xd)
+
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        pass
+

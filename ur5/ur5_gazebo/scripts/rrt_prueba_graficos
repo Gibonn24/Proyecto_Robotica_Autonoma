@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+
+import rospy
+import numpy as np
+from functions import *
+
+S = [0., 0., 0.]     #INICIO
+G = [6.0, 10.0, 8.0] #FINAL
+
+# Lista de obstáculos: [x, y, z, radio]
+obstacleList = [
+    (5, 5, 5, 1),
+    (5, 5, 8, 1),
+]
+
+rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
+path = rrt.planning()
+
+# Parámetros
+maxIter = 1000
+smoothed_path = path_smoothing_3d(path, maxIter, obstacleList)
+
+
+# Crear figura 3D
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection='3d')
+
+for ox, oy, oz, size in obstacleList:
+    plot_cube(ax, ox, oy, oz, size)
+
+# Árbol RRT (líneas amarillas)
+for node in rrt.node_list:
+    if node.parent:
+        ax.plot(node.path_x, node.path_y, node.path_z, '-y', linewidth=0.5)
+
+# Camino original (rojo)
+path_np = np.array(path)
+ax.plot(path_np[:, 0], path_np[:, 1], path_np[:, 2], '-r', label='Original Path')
+
+# Camino suavizado (cian)
+smoothed_np = np.array(smoothed_path)
+ax.plot(smoothed_np[:, 0], smoothed_np[:, 1], smoothed_np[:, 2], '-c', linewidth=4, label='Smoothed Path')
+
+# Punto inicial y final
+ax.scatter(S[0], S[1], S[2], c='r', s=100, label='Start')
+ax.scatter(G[0], G[1], G[2], c='g', s=100, label='Goal')
+
+# Ajustes del gráfico
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+ax.set_xlim(-2, 15)
+ax.set_ylim(-2, 15)
+ax.set_zlim(0, 15)
+ax.legend()
+ax.set_title("RRT 3D - Árbol, Camino original y suavizado")
+plt.tight_layout()
+plt.show()
+

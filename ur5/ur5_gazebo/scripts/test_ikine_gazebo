@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import rospy
+import numpy as np
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from markers import *
+from functions import *
+
+def main():
+    rospy.init_node("send_ik_trajectory")
+
+    pub = rospy.Publisher('/trajectory_controller/command', JointTrajectory, queue_size=10)
+    rospy.sleep(1)  # Espera breve para que el publisher se conecte
+
+    # Markers para visualización (opcional)
+    bmarker = BallMarker(color['RED'])
+    bmarker_des = BallMarker(color['GREEN'])
+
+    # Articulaciones del UR5
+    joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
+                   'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+
+    # Posición deseada (XYZ en metros)
+    xd = np.array([0.3, 0.3, 0.8])
+    # Configuración inicial (estimación para IK)
+    q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
+
+    # Calcula la solución de IK
+    q, errors = ikine_ur5(xd, q0)
+
+    # Para visualización de resultado y objetivo
+    T = fkine_ur5(q)
+    bmarker.xyz(T[0:3, 3])     # posición alcanzada
+    bmarker_des.xyz(xd)        # posición deseada
+
+    print("\n--- Resultado IK ---")
+    print("Posición deseada: X {:.3f}, Y {:.3f}, Z {:.3f}".format(*xd))
+    print("Posición alcanzada: ", np.round(T[0:3, 3], 3))
+    print("q (rad):", np.round(q, 3))
+    print("---------------------\n")
+
+    # Crear mensaje de trayectoria
+    traj = JointTrajectory()
+    traj.joint_names = joint_names
+
+    pt = JointTrajectoryPoint()
+    pt.positions = q
+    pt.time_from_start = rospy.Duration(3.0)  # Tiempo para alcanzar la posición
+
+    traj.points.append(pt)
+    traj.header.stamp = rospy.Time.now()
+
+    # Publica la trayectoria una vez
+    pub.publish(traj)
+
+    # Opcional: mantener nodos de markers visibles por unos segundos
+    rate = rospy.Rate(10)
+    for _ in range(30):  # ~3 segundos
+        bmarker.publish()
+        bmarker_des.publish()
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        pass
+

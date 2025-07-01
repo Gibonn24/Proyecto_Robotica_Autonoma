@@ -8,6 +8,14 @@ import matplotlib.ticker as ticker
 import subprocess
 import tempfile
 import os
+import random
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+
+
+
+
+
 
 pi = np.pi
 cos = np.cos
@@ -97,9 +105,9 @@ def dh(d, theta, a, alpha):
     sa  = np.sin(alpha)
     ca  = np.cos(alpha)
     T = np.array([[cth, -ca*sth,  sa*sth, a*cth],
-                   [sth,  ca*cth, -sa*cth, a*sth],
-                   [0.0,      sa,      ca,     d],
-                   [0.0,     0.0,     0.0,   1.0]])
+               [sth,  ca*cth, -sa*cth, a*sth],
+               [0.0,      sa,      ca,     d],
+               [0.0,     0.0,     0.0,   1.0]])
     return T
 
 
@@ -109,15 +117,13 @@ def fkine_ur5(q):
     q es un vector numpy de la forma [q1, q2, q3, q4, q5, q6]
     """
     # Ensure q is a flat numpy array to avoid shape issues
-    q = np.asarray(q, dtype=float).reshape(-1)
-    # Matrices DH
-    T1 = dh(0.089159,       q[0],      0,  pi/2)
-    T2 = dh(0.0,        q[1]-pi/2, -0.425,   0)
-    T3 = dh(0.0,             q[2], -0.39225, 0)
-    T4 = dh(0.10915,    q[3]-pi/2,      0,  pi/2)
-    T5 = dh(0.09465,        q[4],      0, -pi/2)
-    T6 = dh(0.0823,         q[5],      0,     0)
-    # Efector final con respecto a la base
+    T1 = dh(0.08920, q[0], 0, pi/2)
+    T2 = dh(0, q[1], -0.425, 0)
+    T3 = dh(0, q[2], -0.392, 0)
+    T4 = dh(0.10930, q[3]+pi, 0, -pi/2)
+    T5 = dh(0.09475, q[4], 0, pi/2)
+    T6 = dh(0.125, q[5], 0, 0)
+ # Efector final con respecto a la base
     T = T1.dot(T2).dot(T3).dot(T4).dot(T5).dot(T6)
     return T
 
@@ -266,6 +272,283 @@ def skew(w):
     R[1, 0] = w[2];  R[1, 2] = -w[0]
     R[2, 0] = -w[1]; R[2, 1] = w[0]
     return R
+
+
+
+
+
+
+
+
+
+
+#######################################################
+
+class RRT3D(object):
+    class Node:
+        def __init__(self, x, y, z):
+            self.x = x
+            self.y = y
+            self.z = z
+            self.path_x = []
+            self.path_y = []
+            self.path_z = []
+            self.parent = None
+
+    def __init__(self, start, goal, obstacle_list, rand_area, expand_dis=3.0, 
+                 path_resolution=0.5, goal_sample_rate=5, max_iter=500):
+        self.start = self.Node(start[0], start[1], start[2])
+        self.end = self.Node(goal[0], goal[1], goal[2])
+        self.min_rand = rand_area[0]
+        self.max_rand = rand_area[1]
+        self.expand_dis = expand_dis
+        self.path_resolution = path_resolution
+        self.goal_sample_rate = goal_sample_rate
+        self.max_iter = max_iter
+        self.obstacle_list = obstacle_list
+        self.node_list = []
+
+    def planning(self, animation=False):
+        self.node_list = [self.start]
+        for i in range(self.max_iter):
+            rnd_node = self.get_random_node()
+            nearest_ind = self.get_nearest_node_index(self.node_list, rnd_node)
+            nearest_node = self.node_list[nearest_ind]
+            new_node = self.steer(nearest_node, rnd_node, self.expand_dis)
+
+            if self.check_collision(new_node, self.obstacle_list):
+                self.node_list.append(new_node)
+
+            if self.calc_dist_to_goal(self.node_list[-1].x,
+                                      self.node_list[-1].y,
+                                      self.node_list[-1].z) <= self.expand_dis:
+                final_node = self.steer(self.node_list[-1], self.end, self.expand_dis)
+                if self.check_collision(final_node, self.obstacle_list):
+                    return self.generate_final_course(len(self.node_list) - 1)
+
+            if animation and i % 5 == 0:
+                self.draw_graph(rnd_node)
+
+        return None
+
+    def steer(self, from_node, to_node, extend_length=float("inf")):
+        new_node = self.Node(from_node.x, from_node.y, from_node.z)
+        d, theta, phi = self.calc_distance_and_angles(new_node, to_node)
+        new_node.path_x = [new_node.x]
+        new_node.path_y = [new_node.y]
+        new_node.path_z = [new_node.z]
+
+        if extend_length > d:
+            extend_length = d
+        n_expand = int(np.floor(extend_length / self.path_resolution))
+
+        for _ in range(n_expand):
+            new_node.x += self.path_resolution * np.cos(theta) * np.sin(phi)
+            new_node.y += self.path_resolution * np.sin(theta) * np.sin(phi)
+            new_node.z += self.path_resolution * np.cos(phi)
+            new_node.path_x.append(new_node.x)
+            new_node.path_y.append(new_node.y)
+            new_node.path_z.append(new_node.z)
+
+        d, _, _ = self.calc_distance_and_angles(new_node, to_node)
+        if d <= self.path_resolution:
+            new_node.path_x.append(to_node.x)
+            new_node.path_y.append(to_node.y)
+            new_node.path_z.append(to_node.z)
+            new_node.x = to_node.x
+            new_node.y = to_node.y
+            new_node.z = to_node.z
+
+        new_node.parent = from_node
+        return new_node
+
+    def generate_final_course(self, goal_ind):
+        path = [[self.end.x, self.end.y, self.end.z]]
+        node = self.node_list[goal_ind]
+        while node.parent is not None:
+            path.append([node.x, node.y, node.z])
+            node = node.parent
+        path.append([node.x, node.y, node.z])
+        return path[::-1]
+
+    def calc_dist_to_goal(self, x, y, z):
+        dx = x - self.end.x
+        dy = y - self.end.y
+        dz = z - self.end.z
+        return np.sqrt(dx**2 + dy**2 + dz**2)
+
+    def get_random_node(self):
+        if random.randint(0, 100) > self.goal_sample_rate:
+            rnd = self.Node(
+                random.uniform(self.min_rand, self.max_rand),
+                random.uniform(self.min_rand, self.max_rand),
+                random.uniform(self.min_rand, self.max_rand))
+        else:
+            rnd = self.Node(self.end.x, self.end.y, self.end.z)
+        return rnd
+
+    def draw_graph(self, rnd=None):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        if rnd is not None:
+            ax.scatter(rnd.x, rnd.y, rnd.z, c='k', marker='^')
+
+        for node in self.node_list:
+            if node.parent:
+                ax.plot(node.path_x, node.path_y, node.path_z, "-y")
+
+        for (ox, oy, oz, size) in self.obstacle_list:
+            self.plot_sphere(ax, ox, oy, oz, size)
+
+        ax.scatter(self.start.x, self.start.y, self.start.z, c='r', label='Start')
+        ax.scatter(self.end.x, self.end.y, self.end.z, c='g', label='Goal')
+        ax.set_xlim(self.min_rand, self.max_rand)
+        ax.set_ylim(self.min_rand, self.max_rand)
+        ax.set_zlim(self.min_rand, self.max_rand)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.pause(0.01)
+
+    @staticmethod
+    def plot_sphere(ax, x, y, z, r):
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        xs = x + r * np.cos(u) * np.sin(v)
+        ys = y + r * np.sin(u) * np.sin(v)
+        zs = z + r * np.cos(v)
+        ax.plot_wireframe(xs, ys, zs, color="b", linewidth=0.5)
+
+    @staticmethod
+    def get_nearest_node_index(node_list, rnd_node):
+        dlist = [(node.x - rnd_node.x)**2 +
+                 (node.y - rnd_node.y)**2 +
+                 (node.z - rnd_node.z)**2 for node in node_list]
+        return dlist.index(min(dlist))
+
+    @staticmethod
+    def check_collision(node, obstacle_list):
+        if node is None:
+            return False
+        for (ox, oy, oz, size) in obstacle_list:
+            dx = [ox - x for x in node.path_x]
+            dy = [oy - y for y in node.path_y]
+            dz = [oz - z for z in node.path_z]
+            d_list = [dx[i]**2 + dy[i]**2 + dz[i]**2 for i in range(len(dx))]
+            if min(d_list) <= size**2:
+                return False
+        return True
+
+    @staticmethod
+    def calc_distance_and_angles(from_node, to_node):
+        dx = to_node.x - from_node.x
+        dy = to_node.y - from_node.y
+        dz = to_node.z - from_node.z
+        d = np.sqrt(dx**2 + dy**2 + dz**2)
+        theta = np.arctan2(dy, dx)
+        phi = np.arccos(dz / d) if d != 0 else 0
+        return d, theta, phi
+    
+
+
+def get_path_length_3d(path):
+    le = 0
+    for i in range(len(path) - 1):
+        dx = path[i + 1][0] - path[i][0]
+        dy = path[i + 1][1] - path[i][1]
+        dz = path[i + 1][2] - path[i][2]
+        d = np.sqrt(dx**2 + dy**2 + dz**2)
+        le += d
+    return le
+
+
+def get_target_point_3d(path, targetL):
+    le = 0
+    ti = 0
+    lastPairLen = 0
+    for i in range(len(path) - 1):
+        dx = path[i + 1][0] - path[i][0]
+        dy = path[i + 1][1] - path[i][1]
+        dz = path[i + 1][2] - path[i][2]
+        d = np.sqrt(dx**2 + dy**2 + dz**2)
+        le += d
+        if le >= targetL:
+            ti = i - 1
+            lastPairLen = d
+            break
+
+    partRatio = (le - targetL) / lastPairLen
+    x = path[ti][0] + (path[ti + 1][0] - path[ti][0]) * partRatio
+    y = path[ti][1] + (path[ti + 1][1] - path[ti][1]) * partRatio
+    z = path[ti][2] + (path[ti + 1][2] - path[ti][2]) * partRatio
+    return [x, y, z, ti]
+
+
+def line_collision_check_3d(p1, p2, obstacleList):
+    for (ox, oy, oz, size) in obstacleList:
+        # Discretizar segmento en puntos
+        num_points = 10
+        for i in range(num_points + 1):
+            t = i / num_points
+            x = p1[0] + (p2[0] - p1[0]) * t
+            y = p1[1] + (p2[1] - p1[1]) * t
+            z = p1[2] + (p2[2] - p1[2]) * t
+            dx = ox - x
+            dy = oy - y
+            dz = oz - z
+            d = np.sqrt(dx**2 + dy**2 + dz**2)
+            if d <= size:
+                return False  # Hay colisión
+    return True  # No colisión
+
+
+def path_smoothing_3d(path, max_iter, obstacle_list):
+    le = get_path_length_3d(path)
+    for _ in range(max_iter):
+        # Sample two points
+        pickPoints = [random.uniform(0, le), random.uniform(0, le)]
+        pickPoints.sort()
+        first = get_target_point_3d(path, pickPoints[0])
+        second = get_target_point_3d(path, pickPoints[1])
+
+        if first[3] <= 0 or second[3] <= 0:
+            continue
+        if (second[3] + 1) > len(path):
+            continue
+        if second[3] == first[3]:
+            continue
+
+        if not line_collision_check_3d(first, second, obstacle_list):
+            continue
+
+        # Crear nuevo camino
+        newPath = []
+        newPath.extend(path[:first[3] + 1])
+        newPath.append(first[:3])  # solo x,y,z
+        newPath.append(second[:3])
+        newPath.extend(path[second[3] + 1:])
+        path = newPath
+        le = get_path_length_3d(path)
+
+    return path
+    
+def plot_sphere(ax, x, y, z, r):
+    u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:20j]
+    xs = x + r * np.cos(u) * np.sin(v)
+    ys = y + r * np.sin(u) * np.sin(v)
+    zs = z + r * np.cos(v)
+    ax.plot_surface(xs, ys, zs, color="b", alpha=0.3, edgecolor='gray')
+
+def plot_cube(ax, x, y, z, size, color='b', alpha=0.3):
+    ax.bar3d(
+        x - size / 2, y - size / 2, z - size / 2,  # centro del cubo
+        size, size, size,                          # dimensiones del cubo
+        color=color, alpha=alpha, edgecolor='k'
+    )
+        
+    
+
+
+
 
 
 
