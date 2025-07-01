@@ -99,6 +99,7 @@ class ShelfScanner:
                 self.detections.append((brand, (X, Y, Z)))
 
     def scan(self):
+        self.detections = []  # Reset detections to avoid mixing results from multiple runs
         rate = rospy.Rate(1)
         for pos in self.shelf_positions:
             self.move_arm(pos)
