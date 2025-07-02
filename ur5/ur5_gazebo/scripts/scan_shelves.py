@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan nine shelves across three bookcases with the UR5 camera and record
+"""Scan 3 shelves across three bookcases with the UR5 camera and record
 can positions."""
 
 import os
@@ -52,17 +52,26 @@ class ShelfScanner:
 
         self.shelf_positions = rospy.get_param('~shelf_positions', [
             # Bookshelf 1
-            [0, -2.4, 2.5, 3.14, -1.5, 3.14] ,  # bottom 1
-            [0.0, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle
-            [0.0, -0.8, 1.6, -1.8, -1.5, 0.0],  # top
-            # Bookshelf 2
-            [1.57, -2.4, 2.5, 3.14, -1.5, 3.14]   # bottom
-            [1.57, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle
-            [1.57, -0.8, 1.6, -1.8, -1.5, 0.0],  # top
+            [1.57, -2.4, 2.5, 3.14, -1.5, 3.14] ,  # bottom 1
+            [1.10, -2.4, 2.5, 3.14, -1.5, 3.14],  # middle 1
+            [1.57, -2.4, 2.2, 3.14, -1.5, 3.14] ,  # top
+            [1.10, -2.4, 2.2, 3.14, -1.5, 3.14] ,  # bottom 1
+            [1.57, -2.0, 1.5, 3.14, -1.5, 3.14] ,  # middle 1
+            [1.10, -2.0, 1.5, 3.14, -1.5, 3.14] ,  # top
+            # Bookshelf 2SSS
+            [3.14, -2.4, 2.5, 3.14, -1.5, 3.14],   # bottom
+            [2.67, -2.4, 2.5, 3.14, -1.5, 3.14],   # bottom 2
+            [3.14, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle1
+            [2.67, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle2
+            [3.14, -2.0, 1.5, 3.14, -1.5, 3.14],  # top
+            [2.67, -2.0, 1.5, 3.14, -1.5, 3.14],  # top2
             # Bookshelf 3
-            [-1.57, -1.4, 1.2, -1.8, -1.5, 0.0],  # bottom
-            [-1.57, -1.1, 1.4, -1.8, -1.5, 0.0],  # middle
-            [-1.57, -0.8, 1.6, -1.8, -1.5, 0.0],  # top
+            [-1.57, -2.4, 2.5, 3.14, -1.5, 3.14],  # bottom
+            [-1.10, -2.4, 2.5, 3.14, -1.5, 3.14],   # bottom2
+            [-1.57, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle
+            [-1.10, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle2
+            [-1.57, -2.0, 1.5, 3.14, -1.5, 3.14],  # top
+            [-1.10, -2.0, 1.5, 3.14, -1.5, 3.14],  # top2
         ])
 
     def color_callback(self, msg):
@@ -120,8 +129,8 @@ class ShelfScanner:
             rospy.logwarn('No cans detected.')
             return
 
-        out_path = os.path.join(rospy.get_param('~output_dir', '/tmp'),
-                                'detected_cans.csv')
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        out_path = os.path.join(script_dir, 'detected_cans.csv')
         with open(out_path, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['brand', 'x', 'y', 'z'])
