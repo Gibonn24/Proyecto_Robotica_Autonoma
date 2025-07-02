@@ -176,6 +176,62 @@ def ikine_ur5(xdes, q0):
             break
     return q, errors
 
+def rotation_error_to_vector(R_err):
+    """
+    Convierte la matriz de error de rotación en un vector de rotación.
+    """
+    theta = np.arccos((np.trace(R_err) - 1) / 2.0)
+
+    # Para evitar división por cero
+    if abs(theta) < 1e-6:
+        return np.zeros(3)
+
+    wx = (R_err[2,1] - R_err[1,2]) / (2*np.sin(theta))
+    wy = (R_err[0,2] - R_err[2,0]) / (2*np.sin(theta))
+    wz = (R_err[1,0] - R_err[0,1]) / (2*np.sin(theta))
+
+    return theta * np.array([wx, wy, wz])
+
+def ikine_ur5_ori(T_des, q0):
+    """
+    IK numérica para UR5 considerando posición y orientación.
+    """
+    epsilon_pos = 0.001
+    epsilon_ori = 0.01
+    max_iter = 10000
+    delta = 0.00001
+    errors = []
+
+    q = np.asarray(copy(q0), dtype=float).reshape(-1)
+
+    for _ in range(max_iter):
+        T = fkine_ur5(q)
+        p = T[0:3, 3]
+        R_curr = T[0:3, 0:3]
+
+        p_des = T_des[0:3, 3]
+        R_des = T_des[0:3, 0:3]
+
+        e_pos = p_des - p
+        R_err = R_des @ R_curr.T
+        e_ori = rotation_error_to_vector(R_err)
+
+        error = np.concatenate((e_pos, e_ori))
+
+        if np.linalg.norm(e_pos) < epsilon_pos and np.linalg.norm(e_ori) < epsilon_ori:
+            break
+
+        J = jacobian_pose_vector(q)
+        delta_q = np.linalg.pinv(J) @ error
+        q = q + delta_q
+
+        errors.append(np.linalg.norm(error))
+        if np.linalg.norm(delta_q) < delta:
+            break
+
+    return q, errors
+    
+    
 
 def ikine_ur5_gradient(xdes, q0, alpha=0.01):
     """
@@ -221,7 +277,34 @@ def jacobian_pose(q, delta=0.0001):
         J[:, i] = (R_inc - R) / delta
     return J
 
+def jacobian_pose_vector(q, delta=1e-5):
+    """
+    Jacobiano numérico de posición y orientación (como vector rotacional).
+    Retorna un Jacobiano de 6 x n.
+    """
+    n = len(q)
+    J = np.zeros((6, n))
+    T = fkine_ur5(q)
+    R = T[0:3, 0:3]
+    p = T[0:3, 3]
 
+    for i in range(n):
+        dq = copy(q)
+        dq[i] += delta
+        T_inc = fkine_ur5(dq)
+        R_inc = T_inc[0:3, 0:3]
+        p_inc = T_inc[0:3, 3]
+
+        # Diferencias
+        dp = (p_inc - p) / delta
+        R_err = R_inc @ R.T
+        do = rotation_error_to_vector(R_err) / delta
+
+        J[0:3, i] = dp
+        J[3:6, i] = do
+
+    return J
+    
 def rot2quat(R):
     """
     Convert a rotation matrix into a quaternion [ew, ex, ey, ez].
@@ -295,12 +378,15 @@ class RRT3D(object):
             self.path_z = []
             self.parent = None
 
-    def __init__(self, start, goal, obstacle_list, rand_area, expand_dis=3.0, 
-                 path_resolution=0.5, goal_sample_rate=5, max_iter=500):
+
+    def __init__(self, start, goal, obstacle_list, rand_area, expand_dis=0.1, 
+                 path_resolution=0.001, goal_sample_rate=10, max_iter=1000):
         self.start = self.Node(start[0], start[1], start[2])
         self.end = self.Node(goal[0], goal[1], goal[2])
-        self.min_rand = rand_area[0]
-        self.max_rand = rand_area[1]
+        self.x_rand = rand_area[0]  # [xmin, xmax]
+        self.y_rand = rand_area[1]  # [ymin, ymax]
+        self.z_rand = rand_area[2]  # [zmin, zmax]
+
         self.expand_dis = expand_dis
         self.path_resolution = path_resolution
         self.goal_sample_rate = goal_sample_rate
@@ -380,9 +466,11 @@ class RRT3D(object):
     def get_random_node(self):
         if random.randint(0, 100) > self.goal_sample_rate:
             rnd = self.Node(
-                random.uniform(self.min_rand, self.max_rand),
-                random.uniform(self.min_rand, self.max_rand),
-                random.uniform(self.min_rand, self.max_rand))
+
+                random.uniform(self.x_rand[0], self.x_rand[1]),
+                random.uniform(self.y_rand[0], self.y_rand[1]),
+                random.uniform(self.z_rand[0], self.z_rand[1]))
+
         else:
             rnd = self.Node(self.end.x, self.end.y, self.end.z)
         return rnd
@@ -398,19 +486,34 @@ class RRT3D(object):
                 ax.plot(node.path_x, node.path_y, node.path_z, "-y")
 
         for (ox, oy, oz, size) in self.obstacle_list:
-            self.plot_sphere(ax, ox, oy, oz, size)
+
+            self.plot_cube(ax, ox, oy, oz, sizex,sizey,sizez)
 
         ax.scatter(self.start.x, self.start.y, self.start.z, c='r', label='Start')
         ax.scatter(self.end.x, self.end.y, self.end.z, c='g', label='Goal')
-        ax.set_xlim(self.min_rand, self.max_rand)
-        ax.set_ylim(self.min_rand, self.max_rand)
-        ax.set_zlim(self.min_rand, self.max_rand)
+        
+        
+        ax.set_xlim(self.x_rand[0], self.x_rand[1])
+        ax.set_ylim(self.y_rand[0], self.y_rand[1])
+        ax.set_zlim(self.z_rand[0], self.z_rand[1])
+
+        
+        
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         plt.pause(0.01)
 
     @staticmethod
+
+    def plot_cube(ax, x, y, z, sizex, sizey, sizez, color='b', alpha=0.3):
+        ax.bar3d(
+        x - sizex / 2, y - sizey / 2, z - sizez / 2,  # centro del cubo
+        sizex, sizey, sizez,                          # dimensiones del cubo
+        color=color, alpha=alpha, edgecolor='k')
+    
+    @staticmethod
+
     def plot_sphere(ax, x, y, z, r):
         u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
         xs = x + r * np.cos(u) * np.sin(v)
@@ -429,14 +532,21 @@ class RRT3D(object):
     def check_collision(node, obstacle_list):
         if node is None:
             return False
-        for (ox, oy, oz, size) in obstacle_list:
-            dx = [ox - x for x in node.path_x]
-            dy = [oy - y for y in node.path_y]
-            dz = [oz - z for z in node.path_z]
-            d_list = [dx[i]**2 + dy[i]**2 + dz[i]**2 for i in range(len(dx))]
-            if min(d_list) <= size**2:
-                return False
-        return True
+
+        for (ox, oy, oz, sizex, sizey, sizez) in obstacle_list:
+            safety_margin = 0.05  # márgen de seguridad
+            x_min = ox - sizex / 2 - safety_margin
+            x_max = ox + sizex / 2 + safety_margin
+            y_min = oy - sizey / 2 - safety_margin
+            y_max = oy + sizey / 2 + safety_margin
+            z_min = oz - sizez / 2 - safety_margin
+            z_max = oz + sizez / 2 + safety_margin
+    
+            for x, y, z in zip(node.path_x, node.path_y, node.path_z):
+                if (x_min <= x <= x_max) and (y_min <= y <= y_max) and (z_min <= z <= z_max):
+                    return False  # Hay colisión
+        return True  # No hay colisión
+
 
     @staticmethod
     def calc_distance_and_angles(from_node, to_node):
@@ -483,28 +593,29 @@ def get_target_point_3d(path, targetL):
     return [x, y, z, ti]
 
 
-def line_collision_check_3d(p1, p2, obstacleList):
-    for (ox, oy, oz, size) in obstacleList:
-        # Discretizar segmento en puntos
-        num_points = 10
-        for i in range(num_points + 1):
-            t = i / num_points
-            x = p1[0] + (p2[0] - p1[0]) * t
-            y = p1[1] + (p2[1] - p1[1]) * t
-            z = p1[2] + (p2[2] - p1[2]) * t
-            dx = ox - x
-            dy = oy - y
-            dz = oz - z
-            d = np.sqrt(dx**2 + dy**2 + dz**2)
-            if d <= size:
-                return False  # Hay colisión
-    return True  # No colisión
+
+def line_collision_check_3d_box(p1, p2, obstacle_list, num_points=10):
+    for i in range(num_points + 1):
+        t = i / num_points
+        x = p1[0] + (p2[0] - p1[0]) * t
+        y = p1[1] + (p2[1] - p1[1]) * t
+        z = p1[2] + (p2[2] - p1[2]) * t
+
+        for (ox, oy, oz, sizex, sizey, sizez) in obstacle_list:
+            in_x = (ox - sizex / 2) <= x <= (ox + sizex / 2)
+            in_y = (oy - sizey / 2) <= y <= (oy + sizey / 2)
+            in_z = (oz - sizez / 2) <= z <= (oz + sizez / 2)
+            if in_x and in_y and in_z:
+                return False  # Colisión detectada
+
+    return True  # Sin colisión
+
+
 
 
 def path_smoothing_3d(path, max_iter, obstacle_list):
     le = get_path_length_3d(path)
     for _ in range(max_iter):
-        # Sample two points
         pickPoints = [random.uniform(0, le), random.uniform(0, le)]
         pickPoints.sort()
         first = get_target_point_3d(path, pickPoints[0])
@@ -517,13 +628,13 @@ def path_smoothing_3d(path, max_iter, obstacle_list):
         if second[3] == first[3]:
             continue
 
-        if not line_collision_check_3d(first, second, obstacle_list):
+        if not line_collision_check_3d_box(first, second, obstacle_list):
             continue
 
-        # Crear nuevo camino
         newPath = []
         newPath.extend(path[:first[3] + 1])
-        newPath.append(first[:3])  # solo x,y,z
+        newPath.append(first[:3])
+
         newPath.append(second[:3])
         newPath.extend(path[second[3] + 1:])
         path = newPath
@@ -531,19 +642,64 @@ def path_smoothing_3d(path, max_iter, obstacle_list):
 
     return path
     
-def plot_sphere(ax, x, y, z, r):
-    u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:20j]
-    xs = x + r * np.cos(u) * np.sin(v)
-    ys = y + r * np.sin(u) * np.sin(v)
-    zs = z + r * np.cos(v)
-    ax.plot_surface(xs, ys, zs, color="b", alpha=0.3, edgecolor='gray')
+   
 
-def plot_cube(ax, x, y, z, size, color='b', alpha=0.3):
-    ax.bar3d(
-        x - size / 2, y - size / 2, z - size / 2,  # centro del cubo
-        size, size, size,                          # dimensiones del cubo
-        color=color, alpha=alpha, edgecolor='k'
-    )
+def transform(local, model_pose):
+    x_rel, y_rel, z_rel = local
+    x_model, y_model, z_model, _, _, yaw = model_pose
+    # Aplicar rotación yaw (en el plano XY)
+    x_rot = np.cos(yaw)*x_rel - np.sin(yaw)*y_rel
+    y_rot = np.sin(yaw)*x_rel + np.cos(yaw)*y_rel
+    # Sumar traslación
+    x_global = x_model + x_rot
+    y_global = y_model + y_rot
+    z_global = z_model + z_rel
+    return (x_global, y_global, z_global)
+
+
+# Rotar vector según eje y ángulo
+def rotate_vector(v, angle_deg, axis):
+    angle_rad = np.radians(angle_deg)
+    x, y, z = v
+    if axis == 'x':
+        return (
+            x,
+            y * np.cos(angle_rad) - z * np.sin(angle_rad),
+            y * np.sin(angle_rad) + z * np.cos(angle_rad)
+        )
+    elif axis == 'y':
+        return (
+            x * np.cos(angle_rad) + z * np.sin(angle_rad),
+            y,
+            -x * np.sin(angle_rad) + z * np.cos(angle_rad)
+        )
+    elif axis == 'z':
+        return (
+            x * np.cos(angle_rad) - y * np.sin(angle_rad),
+            x * np.sin(angle_rad) + y * np.cos(angle_rad),
+            z
+        )
+
+# Rotar y trasladar un bloque
+def rotate_and_translate_block(pos, dims, center, target_pos):
+    # 1. Trasladar al origen
+    rel_pos = tuple(np.subtract(pos, center))
+
+    # 2. Rotaciones: primero Y, luego Z
+    rel_pos = rotate_vector(rel_pos, -90, 'y')
+    rel_pos = rotate_vector(rel_pos, 90, 'z')
+
+    # 3. Trasladar al target
+    final_pos = tuple(np.add(rel_pos, target_pos))
+
+    # 4. Rotar dimensiones igual
+    dx, dy, dz = dims
+    dims_rot = rotate_vector((dx, dy, dz), -90, 'y')
+    dims_rot = rotate_vector(dims_rot, 90, 'z')
+    dims_rot = tuple(map(abs, dims_rot))
+
+    return final_pos + dims_rot
+>>>>>>> rrt
         
     
 

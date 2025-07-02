@@ -4,56 +4,206 @@ import rospy
 import numpy as np
 from functions import *
 
-S = [0., 0., 0.]     #INICIO
-G = [6.0, 10.0, 8.0] #FINAL
 
-# Lista de obstáculos: [x, y, z, radio]
-obstacleList = [
-    (5, 5, 5, 1),
-    (5, 5, 8, 1),
+#Puntos a recorrer
+#####################################
+waypoints = [
+    [0.3, 0.3, 0.75+0.8],
+    [0.0, 0.3, 1.25], 
+    [0.0, 0.5, 1.25],  #PEPSI DEL MEDIO
+    [0.0, 0.0, 1.25], 
+    [1., 0.0, 0.9], #DEJARLO EN LA MESA
+
+
+    [0.2, 0.2, 0.75+0.8] 
 ]
 
-rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
-path = rrt.planning()
 
-# Parámetros
+
+
+
+
+
+# Lista de obstáculos: [x, y, z, dimx, dimy, dimz]
+######################################
+
+bookshelf_parts = [
+    ((0,     0.005, 0.5),   (0.9,  0.01, 1.0)),   # Back
+    ((0.45, -0.195, 0.5),   (0.02, 0.4,  1.0)),   # Left side
+    ((-0.45,-0.195, 0.5),   (0.02, 0.4,  1.0)),   # Right side
+    ((0,    -0.195, 0.03),  (0.88, 0.4,  0.06)),  # Bottom
+    ((0,    -0.195, 0.99),  (0.88, 0.4,  0.02)),  # Top
+    ((0,    -0.195, 0.35),  (0.88, 0.4,  0.02)),  # Lower shelf
+    ((0,    -0.195, 0.65),  (0.88, 0.4,  0.02)),  # Upper shelf
+]
+
+bookshelf_parts2 = [
+    ((0,     0.005, 0.5),   (0.01, 0.9,  1.0)),   # Back
+    ((0.45, -0.195, 0.5),   (0.4, 0.02,  1.0)),   # Left side
+    ((-0.45,-0.195, 0.5),   (0.4, 0.02,  1.0)),   # Right side
+    ((0,    -0.195, 0.03),  (0.4, 0.88, 0.06)),  # Bottom
+    ((0,    -0.195, 0.99),  (0.4, 0.88,  0.02)),  # Top
+    ((0,    -0.195, 0.35),  (0.4, 0.88,  0.02)),  # Lower shelf
+    ((0,    -0.195, 0.65),  (0.4, 0.88,  0.02)),  # Upper shelf
+]
+
+# Poses de los 3 modelos bookshelf en el mundo
+bookshelf_poses = [
+    (0,   -0.9, 0.78, 0, 0, 3.14),   # bookshelf1
+    #(-0.9, 0,   0.78, 0, 0, 1.556),  # bookshelf2
+    (0,    0.9, 0.78, 0, 0, 0),      # bookshelf3
+]
+
+bookshelf_poses2 = [
+    (-0.9, 0,   0.78, 0, 0, 1.556),  # bookshelf2
+]
+
+# Construir obstacleList completa
+obstacleList = []
+
+for pose in bookshelf_poses:
+    for part_local, size in bookshelf_parts:
+        global_pos = transform(part_local, pose)
+        obstacleList.append((*global_pos, *size))
+        
+for pose in bookshelf_poses2:
+    for part_local, size in bookshelf_parts2:
+        global_pos = transform(part_local, pose)
+        obstacleList.append((*global_pos, *size))
+####################################################
+#WOODEN CHASE
+
+# Datos del objeto base
+wooden_case = [
+    (-0.053975, 0.0, 0.1778, 0.01905, 0.5461, 0.3175),
+    (0.0, 0.0, 0.009525,      0.127, 0.5842, 0.01905),
+    (0.0, 0.0, 0.346075, 0.127, 0.5842, 0.01905),
+    (0.0, -0.282575, 0.1778, 0.127, 0.01905, 0.3175),
+    (0.0, 0.282575, 0.1778, 0.127, 0.01905, 0.3175),
+    (0.0095, -0.2151, -0.012, 0.108, 0.05, 0.024),
+    (0.0095, 0.2151, -0.012, 0.108, 0.05, 0.024),
+    (0.243775, 0.0, 0.009525, 0.3556, 0.5842, 0.01905)
+]
+
+# Posiciones globales deseadas
+target_positions = [
+    (0.9,  0.55-0.10, 0.84),
+    (0.9,  0.20-0.10, 0.84),
+    (0.9, -0.16-0.10, 0.84)
+]
+
+# Calcular el centro del objeto original
+centers = [b[:3] for b in wooden_case]
+center = tuple(np.mean(centers, axis=0))
+
+
+# Generar las 3 versiones completas
+all_rotated_cases = []
+
+for target in target_positions:
+    rotated_case = []
+    for block in wooden_case:
+        pos = block[:3]
+        dims = block[3:]
+        rotated = rotate_and_translate_block(pos, dims, center, target)
+        rotated_case.append(rotated)
+    all_rotated_cases.append(rotated_case)
+
+# Resultado: all_rotated_cases[0], [1], [2] contienen los bloques de cada objeto
+# Puedes agregarlos a obstacleList o guardarlos
+obstacleList.extend(all_rotated_cases[0])
+obstacleList.extend(all_rotated_cases[1])
+obstacleList.extend(all_rotated_cases[2])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+######################################
+# Lista de puntos objetivo secuenciales
+
+# Parámetros generales
 maxIter = 1000
-smoothed_path = path_smoothing_3d(path, maxIter, obstacleList)
+all_paths = []
+all_smooth_paths = []
+
+# Planificación por tramos
+for i in range(len(waypoints) - 1):
+    S = waypoints[i]
+    G = waypoints[i + 1]
+
+    rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[[-2.0, 2.0], [-2.0, 2.0], [0.0, 2.0]])
+    path = rrt.planning()
+    
+    if path is None:
+        print(f"No se encontró camino entre {S} y {G}")
+        continue
+
+    smoothed = path_smoothing_3d(path, maxIter, obstacleList)
+    all_paths.append(path)
+    all_smooth_paths.append(smoothed)
+
+# Concatenar todos los caminos
+flat_path = [pt for segment in all_paths for pt in segment]
+flat_smoothed = [pt for segment in all_smooth_paths for pt in segment]
+
+
+
+
+# Convertir a numpy array por seguridad
+smoothed_np = np.array(flat_smoothed)
+# Guardar como archivo CSV con encabezado
+np.savetxt("smoothed_path.csv", smoothed_np, fmt="%.4f", delimiter=",", comments='')
+
+
+
+
 
 
 # Crear figura 3D
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 
-for ox, oy, oz, size in obstacleList:
-    plot_cube(ax, ox, oy, oz, size)
 
-# Árbol RRT (líneas amarillas)
-for node in rrt.node_list:
-    if node.parent:
-        ax.plot(node.path_x, node.path_y, node.path_z, '-y', linewidth=0.5)
+# Dibujar obstáculos
+for ox, oy, oz, sizex, sizey, sizez in obstacleList:
+    RRT3D.plot_cube(ax, ox, oy, oz, sizex, sizey, sizez)
 
-# Camino original (rojo)
-path_np = np.array(path)
-ax.plot(path_np[:, 0], path_np[:, 1], path_np[:, 2], '-r', label='Original Path')
+# Dibujar árbol RRT de cada tramo (opcional)
+# for rrt in rrt_instances: ...
 
-# Camino suavizado (cian)
-smoothed_np = np.array(smoothed_path)
-ax.plot(smoothed_np[:, 0], smoothed_np[:, 1], smoothed_np[:, 2], '-c', linewidth=4, label='Smoothed Path')
+# Dibujar camino original
+flat_np = np.array(flat_path)
+ax.plot(flat_np[:, 0], flat_np[:, 1], flat_np[:, 2], '-r', label='Original Path')
 
-# Punto inicial y final
-ax.scatter(S[0], S[1], S[2], c='r', s=100, label='Start')
-ax.scatter(G[0], G[1], G[2], c='g', s=100, label='Goal')
+# Dibujar camino suavizado
+smooth_np = np.array(flat_smoothed)
+ax.plot(smooth_np[:, 0], smooth_np[:, 1], smooth_np[:, 2], '-c', linewidth=4, label='Smoothed Path')
 
-# Ajustes del gráfico
+# Dibujar todos los puntos de interés
+for i, wp in enumerate(waypoints):
+    ax.scatter(wp[0], wp[1], wp[2], s=100, label=f'Punto {i+1}', marker='o')
+
+# Ajustes
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
-ax.set_xlim(-2, 15)
-ax.set_ylim(-2, 15)
-ax.set_zlim(0, 15)
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
+ax.set_zlim(0, 2)
 ax.legend()
-ax.set_title("RRT 3D - Árbol, Camino original y suavizado")
+ax.set_title("RRT 3D - Múltiples Puntos")
 plt.tight_layout()
 plt.show()
+
+
 

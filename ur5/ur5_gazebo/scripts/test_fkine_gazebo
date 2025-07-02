@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+import rospy
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+import numpy as np
+from markers import *
+from functions import *
+
+if __name__ == '__main__':
+    rospy.init_node("send_joint_trajectory_gazebo")
+
+    # Publisher al controlador de trayectoria
+    pub = rospy.Publisher('/trajectory_controller/command', JointTrajectory, queue_size=10)
+    rospy.sleep(1)  # Espera a que el publisher se conecte
+
+    # Nombre de las articulaciones del UR5
+    joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
+                   'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+
+    # Configuración articular objetivo
+    q = np.array([ 0.315, -1.484,  0.747, -2.791, -0.844,  0.   ])
+
+    # Crear mensaje JointTrajectory
+    traj = JointTrajectory()
+    traj.joint_names = joint_names
+
+    pt = JointTrajectoryPoint()
+    pt.positions = q.tolist()
+    pt.time_from_start = rospy.Duration(2.0)  # Tiempo para alcanzar la posición
+
+    traj.points = [pt]
+    traj.header.stamp = rospy.Time.now()
+
+    # Publicar la trayectoria
+    rospy.loginfo("Enviando trayectoria al robot...")
+    pub.publish(traj)
+
+    # Opcional: visualización del efector final
+    T = fkine_ur5(q)
+    bmarker = BallMarker(color['GREEN'])
+    bmarker.position(T)
+    
+    rospy.loginfo("Esperando que el robot llegue a la posición...")
+    rate = rospy.Rate(10)
+    for _ in range(50):  # esperar ~5s
+        bmarker.publish()
+        rate.sleep()
+

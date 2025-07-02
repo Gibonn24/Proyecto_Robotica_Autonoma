@@ -14,7 +14,9 @@ if __name__ == '__main__':
  # Joint names
  jnames = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
  # Joint Configuration
- q = np.array([0, -1.57, 0.75, 0, 0, 0])
+
+ q = np.array([-0.01, -0.018646467985660387, -0.05212388384170907, -0.007982080182492801, 0.007464133209168722, -0.00017653807154882628])
+
 
  # End effector with respect to the base
  T = fkine_ur5(q)

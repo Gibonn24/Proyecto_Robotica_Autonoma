@@ -21,7 +21,9 @@ def main():
                    'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
     # Posición deseada (XYZ en metros)
-    xd = np.array([0.3, 0.3, 0.8])
+
+    xd = np.array([-0.3, -0.3, 0.9])
+
     # Configuración inicial (estimación para IK)
     q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
 

@@ -41,30 +41,15 @@ def main():
 
     joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                    'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-                   
-                   
-    obstacleList = [
-    #(5, 5, 5, 1)
-    ]
+                 
     
-    q0 = np.array([0, -1.57, 0.75, 0, 0, 0])
-    xd = np.array([0.0, 0.0, 0.8])
-    q,error = ikine_ur5(xd, q0)
-    T = fkine_ur5(q)
+    # Cargar trayectoria desde CSV
+    trajectory = np.loadtxt("smoothed_path.csv", delimiter=",")
 
-    S = T[0:3,3] #INICIAL
-    G = [0.1, 0.8, 0.1]   #FINAL
-    rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
-    path = rrt.planning()
-    maxIter = 1000
-    smoothed_path = path_smoothing_3d(path, maxIter, obstacleList)
-    trajectory = np.array(smoothed_path)
-    
-    new_point = np.array([[0.0, 0.0, 0.8]])  
-    trajectory = np.vstack((trajectory, new_point))
-    
-    trajectory = np.array([[0.0, 0.0, 0.8], [0.3, 0.8, 0.1],[0.0, 0.0, 0.8]])
-    
+    # Restar 0.59 a la componente Z
+    trajectory[:, 0] = -1*trajectory[:, 0]
+    trajectory[:, 1] = -1*trajectory[:, 1]
+    trajectory[:, 2] -= 0.59
     
     trajectory = densify_trajectory(trajectory, num_points_between=3)
 
@@ -74,7 +59,9 @@ def main():
     
     i = 0
     xd = trajectory[i+1]
-    q0 = np.array([0.0, -1.0, 1.7, -2.2, -1.6, 0.0])
+
+    q0 = np.array([ 0.315, -1.484,  0.747, -2.791, -0.844,  0.   ])
+
     
     q = q0.copy()
     rate = rospy.Rate(50)  # 50 Hz

@@ -42,6 +42,29 @@ if __name__ == '__main__':
     q0 = np.array([0, -1.57, 0.75, 0, 0, 0])
     # Inverse kinematics
     q, errors = ikine_ur5(xd, q0)
+    
+    """  
+    # Posición deseada
+    xd = np.array([0.3, 0.3, 0.8])
+
+    # Orientación deseada: por ejemplo, rotación de 90° en Z y -90° en Y
+    R_des = rotx(np.deg2rad(90)) 
+
+    # Traslación deseada
+    T_pos = transl(*xd)
+
+    # Pose deseada: primero rotamos, luego trasladamos
+    T_des = T_pos @ R_des
+
+    # Configuración inicial
+    q0 = np.array([0, -1.57, 0.75, 0, 0, 0])
+
+    # IK considerando posición y orientación
+    q, errors = ikine_ur5(T_des, q0)
+    """
+    
+    
+    
 
     # Resulting position (end effector with respect to the base link)
     T = fkine_ur5(q)
