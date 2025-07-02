@@ -534,7 +534,7 @@ class RRT3D(object):
             return False
 
         for (ox, oy, oz, sizex, sizey, sizez) in obstacle_list:
-            safety_margin = 0.05  # márgen de seguridad
+            safety_margin = 0.01  # márgen de seguridad
             x_min = ox - sizex / 2 - safety_margin
             x_max = ox + sizex / 2 + safety_margin
             y_min = oy - sizey / 2 - safety_margin
