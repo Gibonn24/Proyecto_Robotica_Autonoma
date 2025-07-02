@@ -28,7 +28,10 @@ obstacleList = [
 
 
 
-rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
+# Área de muestreo para el RRT en X, Y y Z
+# Debe especificarse como pares [min, max] para cada eje
+rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList,
+            rand_area=[[-2.0, 2.0], [-2.0, 2.0], [0.0, 2.0]])
 path = rrt.planning()
 
 # Parámetros
