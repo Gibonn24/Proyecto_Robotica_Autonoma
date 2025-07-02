@@ -54,7 +54,9 @@ def main():
 
     S = T[0:3,3] #INICIAL
     G = [0.1, 0.8, 0.1]   #FINAL
-    rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
+    # Área de muestreo para el RRT en X, Y y Z
+    rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList,
+                rand_area=[[-2.0, 2.0], [-2.0, 2.0], [0.0, 2.0]])
     path = rrt.planning()
     maxIter = 1000
     smoothed_path = path_smoothing_3d(path, maxIter, obstacleList)
