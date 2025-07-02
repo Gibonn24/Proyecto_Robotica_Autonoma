@@ -177,16 +177,14 @@ class ShelfScanner:
                     u_indices = np.arange(x1, x2)[None, :]
                     v_indices = np.arange(y1, y2)[:, None]
                     u_grid, v_grid = np.meshgrid(u_indices, v_indices)
-                    u_valid = u_grid[close_mask]
-                    v_valid = v_grid[close_mask]
-                    depth_m = depth_crop[close_mask] / 1000.0
-                else:
-                    u_indices = np.arange(x1, x2)[None, :]
-                    v_indices = np.arange(y1, y2)[:, None]
-                    u_grid, v_grid = np.meshgrid(u_indices, v_indices)
-                    u_valid = u_grid[valid]
-                    v_valid = v_grid[valid]
-                    depth_m = depth_crop[valid] / 1000.0
+                    if np.any(close_mask):
+                        u_valid = u_grid[close_mask]
+                        v_valid = v_grid[close_mask]
+                        depth_m = depth_crop[close_mask] / 1000.0
+                    else:
+                        u_valid = u_grid[valid]
+                        v_valid = v_grid[valid]
+                        depth_m = depth_crop[valid] / 1000.0
 
                 X_cam = (u_valid - cx) * depth_m / fx
                 Y_cam = (v_valid - cy) * depth_m / fy
