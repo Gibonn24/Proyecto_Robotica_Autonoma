@@ -19,6 +19,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from std_msgs.msg import Header
 from geometry_msgs.msg import PointStamped  # Para trabajar con puntos con TF
+import tf2_geometry_msgs.tf2_geometry_msgs 
 
 # Importación segura de YOLO
 try:
@@ -99,11 +100,11 @@ class ShelfScanner:
             [1.57, -2.0, 1.5, 3.14, -1.5, 3.14] ,  # middle 1
             [1.10, -2.0, 1.5, 3.14, -1.5, 3.14] ,  # top
             # Bookshelf 2
-            [3.14, -2.4, 2.5, 3.14, -1.5, 3.14],   # bottom
+            [3.10, -2.4, 2.5, 3.14, -1.5, 3.14],   # bottom
             [2.67, -2.4, 2.5, 3.14, -1.5, 3.14],   # bottom 2
-            [3.14, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle1
+            [3.10, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle1
             [2.67, -2.4, 2.2, 3.14, -1.5, 3.14],  # middle2
-            [3.14, -2.0, 1.5, 3.14, -1.5, 3.14],  # top
+            [3.10, -2.0, 1.5, 3.14, -1.5, 3.14],  # top
             [2.67, -2.0, 1.5, 3.14, -1.5, 3.14],  # top2
             # Bookshelf 3
             [-1.57, -2.4, 2.5, 3.14, -1.5, 3.14],  # bottom

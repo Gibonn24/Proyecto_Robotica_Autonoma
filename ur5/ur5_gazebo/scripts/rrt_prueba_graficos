@@ -8,10 +8,11 @@ from functions import *
 #Puntos a recorrer
 #####################################
 waypoints = [
-    [0.3, 0.3, 0.75+0.8],
-    [0.0, 0.3, 1.25], 
-    [0.0, 0.5, 1.25],  #PEPSI DEL MEDIO
-    [0.0, 0.0, 1.25], 
+
+ 
+    [0, -0.705, 0.86],  #PEPSI DEL MEDIO
+    [0.1, -0.2, 1],
+    [0, 0, 0.86],
     [1., 0.0, 0.9], #DEJARLO EN LA MESA
 
 
