@@ -6,17 +6,16 @@ from functions import *
 
 
 #Puntos a recorrer
+
 #####################################
 waypoints = [
 
  
-    [0, -0.705, 0.86],  #PEPSI DEL MEDIO
-    [0.1, -0.2, 1],
-    [0, 0, 0.86],
+    [0.2, 0.8, 1.48 ],  #PEPSI DEL MEDIO
+
     [1., 0.0, 0.9], #DEJARLO EN LA MESA
 
 
-    [0.2, 0.2, 0.75+0.8] 
 ]
 
 

@@ -14,7 +14,7 @@ import cv2
 import tf2_ros  # Necesario para las transformaciones de coordenadas (TF)
 import message_filters  # Necesario para sincronizar tópicos de la cámara
 import numpy as np
-
+import pcl 
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -180,11 +180,11 @@ class ShelfScanner:
                     if np.any(close_mask):
                         u_valid = u_grid[close_mask]
                         v_valid = v_grid[close_mask]
-                        depth_m = depth_crop[close_mask] / 1000.0
+                        depth_m = depth_crop[close_mask]
                     else:
                         u_valid = u_grid[valid]
                         v_valid = v_grid[valid]
-                        depth_m = depth_crop[valid] / 1000.0
+                        depth_m = depth_crop[valid]
 
                 X_cam = (u_valid - cx) * depth_m / fx
                 Y_cam = (v_valid - cy) * depth_m / fy
