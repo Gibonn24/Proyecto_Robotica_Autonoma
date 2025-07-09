@@ -379,7 +379,7 @@ class RRT3D(object):
             self.parent = None
 
 
-    def __init__(self, start, goal, obstacle_list, rand_area, expand_dis=0.1, 
+    def __init__(self, start, goal, obstacle_list, rand_area=0.05, expand_dis=0.05, 
                  path_resolution=0.001, goal_sample_rate=10, max_iter=1000):
         self.start = self.Node(start[0], start[1], start[2])
         self.end = self.Node(goal[0], goal[1], goal[2])
@@ -699,12 +699,3 @@ def rotate_and_translate_block(pos, dims, center, target_pos):
     dims_rot = tuple(map(abs, dims_rot))
 
     return final_pos + dims_rot
-
-        
-    
-
-
-
-
-
-

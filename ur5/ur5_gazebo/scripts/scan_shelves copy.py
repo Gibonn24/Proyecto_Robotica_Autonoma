@@ -13,8 +13,7 @@ import rospy
 import cv2
 import tf2_ros  # Necesario para las transformaciones de coordenadas (TF)
 import message_filters  # Necesario para sincronizar tópicos de la cámara
-import numpy as np
-import pcl 
+
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -163,36 +162,23 @@ class ShelfScanner:
 
         for r in results:
             for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                # Recorte de la región de la caja en la imagen de profundidad
-                depth_crop = self.depth_img[y1:y2, x1:x2].astype(np.float32)
-                valid = depth_crop > 0
-                if not np.any(valid):
-                    continue
-                depth_values = depth_crop[valid]
-                # Considerar puntos cercanos al primer plano para evitar el fondo
-                min_depth = depth_values.min()
-                close_mask = valid & (depth_crop <= min_depth + 50)
-                if np.any(close_mask):
-                    u_indices = np.arange(x1, x2)[None, :]
-                    v_indices = np.arange(y1, y2)[:, None]
-                    u_grid, v_grid = np.meshgrid(u_indices, v_indices)
-                    if np.any(close_mask):
-                        u_valid = u_grid[close_mask]
-                        v_valid = v_grid[close_mask]
-                        depth_m = depth_crop[close_mask]
-                    else:
-                        u_valid = u_grid[valid]
-                        v_valid = v_grid[valid]
-                        depth_m = depth_crop[valid]
-
-                X_cam = (u_valid - cx) * depth_m / fx
-                Y_cam = (v_valid - cy) * depth_m / fy
+                u, v = (int((box.xyxy[0][0] + box.xyxy[0][2]) / 2),
+                        int((box.xyxy[0][1] + box.xyxy[0][3]) / 2))
+                
+                try:
+                    depth_mm = self.depth_img[v, u]
+                    if depth_mm == 0:  # Lectura inválida
+                        continue
+                except IndexError:
+                    continue # El centroide está fuera de la imagen de profundidad
+                
+                depth_m = float(depth_mm) / 1000.0
+                
+                # --- 1. Cálculo 3D en el marco de la cámara ---
+                # Este cálculo es correcto según el modelo de cámara pinhole.
+                X_cam = (u - cx) * depth_m / fx
+                Y_cam = (v - cy) * depth_m / fy
                 Z_cam = depth_m
-
-                X_cam = float(np.mean(X_cam))
-                Y_cam = float(np.mean(Y_cam))
-                Z_cam = float(np.mean(Z_cam))
 
                 # --- 2. Transformación de Coordenadas (TF) ---
                 # ARREGLO: Transforma el punto del marco de la cámara al marco global.

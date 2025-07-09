@@ -30,7 +30,7 @@ def main():
         traj.header.stamp = rospy.Time.now()
         pts = JointTrajectoryPoint()
 
-        pts.positions = [0, 0.0, 0, 0, 0, 0.0]
+        pts.positions = [2.67, -2.4, 2.2, 3.14, -1.5, 3.14]
 
         pts.time_from_start = rospy.Duration(1.0)
 

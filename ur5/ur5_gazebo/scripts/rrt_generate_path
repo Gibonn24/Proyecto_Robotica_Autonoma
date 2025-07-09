@@ -19,7 +19,7 @@ T = fkine_ur5(q)
 S = T[0:3,3] #INICIAL
  
 
-G = [0.1, 0.8, 0.1]   #FINAL
+G = [0, -0.705, 0.86]   #FINAL
 
 # Lista de obstáculos esféricos: [x, y, z, radio]
 obstacleList = [
@@ -28,7 +28,10 @@ obstacleList = [
 
 
 
-rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList, rand_area=[-2, 15])
+# Área de muestreo para el RRT en X, Y y Z
+# Debe especificarse como pares [min, max] para cada eje
+rrt = RRT3D(start=S, goal=G, obstacle_list=obstacleList,
+            rand_area=[[-2.0, 2.0], [-2.0, 2.0], [0.0, 2.0]])
 path = rrt.planning()
 
 # Parámetros

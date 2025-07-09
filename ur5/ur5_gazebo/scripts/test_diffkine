@@ -18,6 +18,10 @@ def main():
     joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                    'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
+
+
+
+
     # Punto objetivo
     q0_guess = np.array([0, -1.57, 0.75, 0, 0, 0])
     xd_raw = np.array([-0.3, 0.6, 0.1])
