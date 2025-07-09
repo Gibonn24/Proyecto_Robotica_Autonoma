@@ -116,13 +116,13 @@ def fkine_ur5(q):
     Calcular la cinematica directa del robot UR5 dados sus valores articulares.
     q es un vector numpy de la forma [q1, q2, q3, q4, q5, q6]
     """
-    # Ensure q is a flat numpy array to avoid shape issues
-    T1 = dh(0.08920, q[0], 0, pi/2)
-    T2 = dh(0, q[1], -0.425, 0)
-    T3 = dh(0, q[2], -0.392, 0)
-    T4 = dh(0.10930, q[3]+pi, 0, -pi/2)
-    T5 = dh(0.09475, q[4], 0, pi/2)
-    T6 = dh(0.125, q[5], 0, 0)
+
+    T1 = dh(0.08920,    q[0],      0,  pi/2)
+    T2 = dh(      0,    q[1], -0.425,     0)
+    T3 = dh(      0,    q[2], -0.392,     0)
+    T4 = dh(0.10930, q[3]+pi,      0, -pi/2)
+    T5 = dh(0.09475,    q[4],      0,  pi/2)
+    T6 = dh(  0.125,    q[5],      0,     0)
  # Efector final con respecto a la base
     T = T1.dot(T2).dot(T3).dot(T4).dot(T5).dot(T6)
     return T
@@ -534,7 +534,7 @@ class RRT3D(object):
             return False
 
         for (ox, oy, oz, sizex, sizey, sizez) in obstacle_list:
-            safety_margin = 0.05  # márgen de seguridad
+            safety_margin = 0.01  # márgen de seguridad
             x_min = ox - sizex / 2 - safety_margin
             x_max = ox + sizex / 2 + safety_margin
             y_min = oy - sizey / 2 - safety_margin
@@ -699,7 +699,7 @@ def rotate_and_translate_block(pos, dims, center, target_pos):
     dims_rot = tuple(map(abs, dims_rot))
 
     return final_pos + dims_rot
->>>>>>> rrt
+
         
     
 
